@@ -1,0 +1,25 @@
+set.seed(16)
+act_scores = rnorm(10000,20.9,5.7)
+mean(act_scores)
+sd(act_scores)
+sum(act_scores >= 36)
+mean(act_scores > 30)
+mean(act_scores <= 10)
+x = 1:36
+f_x = dnorm(x, 20.9, 5.7)
+lines(x, f_x)
+
+act_scores_z = (act_scores - mean(act_scores))/sd(act_scores)
+mean(act_scores_z > 2)
+mean(act_scores) + 2*sd(act_scores)
+qnorm(.975, mean(act_scores),sd(act_scores))
+
+F = function(a) mean(act_scores<a)
+F(31)
+qnorm(.95, 20.9, 5.7)
+p = seq(.01,.99,.01)
+sample_quantiles = quantile(p,act_scores)
+sample_quantiles
+theoretical_quantiles = qnorm(p, 20.9, 5.7)
+qqplot(theoretical_quantiles, sample_quantiles, pch=16)
+lines(0:40,0:40)

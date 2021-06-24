@@ -1,0 +1,1304 @@
+---
+title: "Data Science Certificate Course"
+author: "Connor Bruce"
+output:
+  html_document: default
+  word_document: default
+---
+
+---
+```{r, echo = F, eval = F}
+install.packages("tidyverse", "dslabs", "NHANES","ggthemes", "ggrepel","gridExtra", "dplyr")
+library(tidyverse)
+library(dslabs)
+library(NHANES)
+library(ggthemes)
+library(ggrepel)
+library(gridExtra)
+library(dplyr)
+```
+
+
+
+## Course 1: R Basics
+
+### Section 1: R Basics, Functions, and Data Types
+
+#### 1.1 Motivation and Getting Started
+
+* This course will focus on US crime statistics as the Case Study.
+* install.packages("___") to install packages (must be connected to internet)
+* library(___) to load package into script after it has been installed (only need to install once)  
+
+Here is an example of loading packages and using them to create a graph
+```{r, error = F,warning =F, message = F}
+library(tidyverse)
+library(dslabs)
+
+data(murders)
+
+murders %>%
+  ggplot(aes(population, total, label = abb, color =region)) +
+  geom_label()
+```  
+
+---
+
+#### 1.2 R Basics  
+
+##### Objects
+* Objects can be variables, or other, more complicated things, such as functions
+* ls() outputs a list of objects. Alternatively, it can been in the Environment tab at the top right.
+
+Objects example: Variables being used to solve quadratic formula
+
+```{r}
+a = 1
+b = 1
+c = -1
+
+(-b + sqrt(b^2-4*a*c))/(2*a)
+(-b - sqrt(b^2-4*a*c))/(2*a)
+```
+
+##### Functions
+
+* To see the code behind a function, type the function without the parenthesis into the console
+* Nested functions: Call a function to get an argument for another function. Example:
+```{r}
+log(exp(1))
+```
+* To get help with a function, can use the help() function using the function as the argument.
+```{r}
+#help(log)
+```
+* Or you can check the arguments:
+```{r}
+args(log)
+```  
+
+---
+
+#### 1.3 Data Types
+
+##### Data Frames
+
+* class() can be used to determine the type of data.
+* str() can show the structure of the data frame
+* head() shows the first 6 rows
+* Can use $ as a variable accessor. Will return a vector with the column of the variables
+
+```{r}
+class(murders)
+str(murders)
+head(murders)
+pop = murders$population
+length(pop)
+```
+
+##### Other Data Types
+
+* Character Strings
+```{r}
+class(murders$state)
+```
+
+* Logical Variables (True/False)
+```{r}
+z = 3 == 2
+z
+class(z)
+```
+
+##### Factors
+
+* Good for storing categorical data (more memory efficient) - numbers associated with a character string
+* Recommended to avoid
+* table() can be used to show how many are in each category
+
+```{r}
+levels(murders$region)
+table(murders$region)
+```  
+
+---
+
+### Section 2: Vectors, Sorting
+
+#### 2.1 Vectors
+
+* Create vectors by using the concatenate function, c()
+* Can assign names to the numeric values in a vector
+* Two ways to assign names are shown below
+
+```{r}
+codes = c(380,124,818)
+country = c("italy", "canada","egypt")
+names(codes) = country
+codes2 = c(italy = 380, canada = 124, egypt = 818)
+codes
+codes2
+```
+
+* seq(a,b,c) provides a vector from a to b by jumps of c
+* Can also do a sequence using :
+```{r}
+seq(1,10)
+1:10
+seq(1,100,10)
+```
+
+##### Subsetting
+
+* [] are used to access elements of a vector
+* Indexes at 1
+* Below are examples of pulling different elements from the codes vector
+```{r}
+codes[2]
+codes[c(1,3)]
+codes["canada"]
+codes[c("egypt","italy")]
+```
+
+##### Vector Coercion
+
+* Coercion is an attempt by r to be flexible with data types.
+* The below code should throw an error because all elements of a vector must be the same type, however R coerces 1 and 3 into character variables in order to avoid and error
+```{r}
+x = c(1,"canada",3)
+x
+```
+
+* Variables can be converted into different types
+```{r}
+x = 1:5
+x
+y = as.character(x)
+y
+as.numeric(y)
+```
+
+* Can only coerce in certain ways and if impossible, will replace with NA
+```{r}
+x = c("1", "b", "2")
+as.numeric(x)
+```
+
+---
+
+#### 2.2 Sorting
+
+* sort() sorting into ascending order
+* order() provides the index of the values in ascending order
+* Can use the index to extract the necessary information
+```{r}
+sort(murders$total)
+order(murders$total)
+index = order(murders$total)
+murders$abb[index]
+```
+
+* max() gives the maximum value in a vector, which.max() give the index of that value
+
+```{r}
+max(murders$total)
+which.max(murders$total)
+i_max = which.max(murders$total)
+murders$state[i_max]
+```
+
+* rank() gives the "rank" of each value in the vector (1 being the smallest value) (also works with min)
+
+```{r}
+x = c(31,4,15,92,65)
+rank(x)
+```
+
+* Here is an overall comparison of sort(), order(), and rank()
+
+```{r}
+x = c(31,4,15,92,65)
+sortx = sort(x)
+orderx = order(x)
+rankx = rank(x)
+sorderank = matrix(c(x,sortx,orderx,rankx), ncol = 4)
+colnames(sorderank) = c("original", "sort", "order", "rank")
+rownames(sorderank) = c(" "," "," "," "," ")
+sorderank
+```
+
+* Can use is.na() to find which entries in a vector are NA (returns as a vector of logical variables)
+* True = 1, False = 0
+* Can also use [!___] to take everything from a vector that is not something.
+
+---
+
+#### 2.3 Vector Arithmetic
+
+* We can see that California has the most murders and can also see that California also has the largest population
+```{r}
+murders$state[which.max(murders$population)]
+```
+
+* Therefore, we should be looking at the murders per capita
+* It is possible to scale a vector. e.g vector to inches to centimeters
+```{r}
+height = c(12,23,15,32,42,26,51,10)
+height * 2.54
+```
+* Now we can do this with the murders vector to get a rate of murders per 100,000 and then order those to find which has the highest rate and the lowest rate. It can be seen that, while California has the most murders, it ranks 14th in terms of murder rate.
+```{r}
+murder_rate = murders$total/murders$population*100000
+murders$state[order(murder_rate, decreasing = T)]
+```
+
+---
+
+### Section 3: Indexing, Data Wrangling, Plots  
+
+#### 3.1 Indexing
+
+* We can subset a vector based on properties of another vector.
+* We can use logical operators to index vectors.
+* Suppose we want to figure out which states have a murder rate of <= .71 per 100,000:
+
+```{r}
+index = murder_rate <= .71
+index
+murders$state[index]
+sum(index)
+```
+
+* Now supposed we want to move to a state in the Western region that has a murder rate that is <= 1.
+```{r}
+west = murders$region == "West"
+safe = murder_rate <= 1
+index = safe & west
+murders$state[index]
+```
+
+##### Indexing Functions
+
+* which() gives entries of a logical vector that are true
+* match() looks for entries in a vector and returns the index needed to access them.
+* %in% determines whether each element of a first vector is in a second vector.
+
+```{r}
+x = c(FALSE, TRUE, FALSE, TRUE, TRUE, FALSE)
+which(x)
+index = match(c("New York","Florida","Texas"), murders$state)
+index
+murders$state[index]
+x = c("a","b","c","d","e")
+y = c("a","d","f")
+y %in% x
+c("Boston", "Dakota", "Washington") %in% murders$state
+```
+
+---
+
+#### 3.2: Data Wrangling
+
+First, the dplyr package must be installed and loaded in
+```{r}
+library(dplyr)
+```
+
+dplyr Functions:  
+
+* mutate() can be used to change a data table by adding a new column or changing an existing one. Works in the dataframe, not the workspace
+* filter() can be used to filter the data by subsetting rows.
+* select() can be used to subset data by selecting specific columns.
+ 
+Using this, we can now edit our murders data frame to add the information we want to add:
+```{r}
+murders = mutate(murders, rate = total/population*100000)
+head(murders)
+filter(murders, rate <= .71)
+new_table = select(murders, state, region, rate)
+filter(new_table, rate <= .71)
+```
+
+In order to streamline, results can be sent from one function to another function using the pipe operator %>%:
+
+```{r}
+murders %>% select(state, region, rate) %>% filter(rate <= .71)
+```
+
+##### Data Frames
+
+* Data frames can be created using the data.frame() function
+* Columns are created using name = data, name = data, name = data, ...
+* Warning: data.frame turns character variables into factors, to avoid, add stringsAsFactors = FALSE
+Example:
+```{r}
+grades = data.frame(names = c("John", "Juan", "Jean","Yao"),exam_1 = c(95,80,90,85),exam_2 = c(90,85,85,90), stringsAsFactors = F)
+grades
+```
+
+---
+
+#### 3.3: Basic Plots
+More will be learned on plots during the course based on the ggplot2 package.  
+
+Below are 3 different types of plots: scatterplot, histogram, and boxplot. All are related to the murders data set that we have been working with:
+
+```{r}
+x = murders$population / 10^6
+y = murders$total
+plot(x,y)
+
+hist(murders$rate)
+
+boxplot(rate~region, data=murders)
+```  
+
+---
+
+### Section 4: Programming Basics
+
+#### 4.2 Conditionals
+
+* Most common conditional is the if/else statement  
+
+Let's use the if/else statement to see if any of the states have a murder rate lower that .5, and print them if they do:
+
+```{r}
+ind = which.min(murder_rate)
+if(murder_rate[ind] < .5) {
+  print(murders$state[ind])
+} else {
+  print("No state has murder rate that low")
+}
+
+if(murder_rate[ind] < .25) {
+  print(murders$state[ind])
+} else {
+  print("No state has murder rate that low")
+}
+```
+
+* Can also use ifelse(boolean statement, return if true, return if false) statement
+* The ifelse statement can be useful because it can be used on vectors
+
+```{r}
+a=0
+ifelse(a > 0,1/a, NA)
+a=5
+ifelse(a > 0,1/a, NA)
+a = c(0,1,2,-4,5)
+ifelse(a > 0,1/a, NA)
+```
+
+* Another example using na_example. Say we want to replace all the NAs in the data set with 0, we can use ifelse to do this:
+
+```{r}
+data(na_example)
+sum(is.na(na_example))
+no_nas = ifelse(is.na(na_example),0,na_example)
+```
+* any and all are useful function: any takes a vector and returns TRUE if there is at least one TRUE, all returns TRUE if all of the entries are TRUE:
+
+```{r}
+z = c(T,T,F)
+z2 = c(F,F,F)
+z3 = c(T,T,T)
+any(z)
+all(z)
+any(z2)
+all(z2)
+any(z3)
+all(z3)
+```
+
+---
+
+#### 4.3 Functions
+
+* Functions are useful for operations that need to be done multiple times.
+* Values/variables in functions only live in the function, not in the global environment
+* Format to create a function: my_function = function(VARIABLES){operation that operate on VARIABLES and return value}
+
+Example for creating the mean function:
+```{r}
+avg = function(x){
+  s = sum(x)
+  n = length(x)
+  s/n
+}
+avg(c(1,2,3,4,5,6,7))
+
+x = 1:100
+identical(mean(x),avg(x))
+```
+
+Function that computes either arithmetic or geometric average:
+```{r}
+avg2 = function(x, arithmetic = T){
+  n = length(x)
+  ifelse(arithmetic, sum(x)/n, prod(x)^(1/n))
+}
+avg2(1:10)
+avg2(1:10, F)
+```
+
+---
+
+#### 4.4 For Loops
+
+* Say we want to prove the formula sum of 1 to n = $\frac{n(n+1)}{2}$:
+
+```{r}
+compute_s_n = function(n){
+  x = 1:n
+  sum(x)
+}
+compute_s_n(3)
+compute_s_n(100)
+```
+
+* For loops allow us to change define the range that a variable takes:
+* For loop format looks like: for(i in range of values){operations that use i in that range of values}
+* Whatever variable in the range will be set to the end value
+
+Simple Example:
+```{r}
+for(i in 1:5){
+  print(i)
+}
+i
+```
+
+Here is a for loop for the sum problem:
+```{r}
+m = 25
+#create an empty vector
+s_n = vector(length=m)
+for(n in 1:m){
+  s_n[n]=compute_s_n(n)
+}
+n = 1:m
+plot(n,s_n)
+lines(n,(n*(n+1))/2)
+```
+Notice that the line matches the points perfectly
+
+##### Other Functions
+
+* For loops are rarely used because there is usually a more powerful way to do the same task
+* Examples are: apply, sapply, tapply, and mapply
+
+---
+
+## Course 2: Data Visualization
+
+### Section 1: Intro to Data Visualization and Distributions
+
+#### 1.1 Intro to Data Visualization
+
+Data Types:  
+
+* Discrete Numerical: numbers from a countably infinite list
+* Continuous Numerical: can be any number
+* Categorical: data can be broken up into categories (e.g Male and Female, or regions of the US)
+* Ordinate: Ordered categorical (can also be numbers) (e.g tall, average, short)
+
+---
+
+#### 1.2 Intro to Distributions
+
+* For categorical data, the distribution simply describes the proportions of each unique category
+
+```{r}
+library(dslabs)
+data(heights)
+head(heights)
+
+prop.table(table(heights$sex))
+```
+
+##### Cumulative Density Functions
+
+* When there are more categories, a bar plot is better at describing the distribution.
+* Cumulative Distribution Function (CDF) is a function that reports the the proportion of data below a certain value:
+$$F(a)=Pr(x \leq a)$$
+* The proportion of data that are between two values (a and b) can be calculated using:
+$$F(b) - F(a)$$
+* If we want to get the proportion of data that is above a certain value:
+$$1 - F(a) = Pr(x \geq a)$$  
+
+Here is an example of creating a cdf related for the heights:
+```{r}
+a <- seq(min(heights$height), max(heights$height), length = 100)    
+heightcdf_function <- function(x) {    
+  mean(heights$height <= x)
+}
+heightcdf_values <- sapply(a, heightcdf_function)
+plot(a, heightcdf_values)
+heightcdf_function(72)
+```  
+
+
+##### Smooth Density Plots  
+* Smooth density plots can be thought of as histograms where the bin width is extremely or infinitely small.
+* The area under the smooth density curve much be 1
+* The area under the curve between two points it the proportion of the data that is between those values.  
+
+##### Normal Distribution
+
+Formula for the Normal Distribution:
+$$ Pr(a < x < b) = \int_a^b \frac{1}{\sqrt{2\pi}s}e^{-\frac{1}{2}(\frac{x-m}{s})^2}dx$$
+where $m$ is the mean, and $s$ is the standard deviation.  
+
+* ~95% of the data is within 2 standard deviations of the mean.
+
+In order to make a normal distribution, first the mean and standard deviation must be calculated. Here are two ways using the heights of the males as the data:
+```{r}
+library(tidyverse)
+library(dslabs)
+data(heights)
+index = heights$sex=="Male"
+x = heights$height[index]
+
+average = sum(x)/length(x)
+sd = sqrt(sum((x-average)^2)/length(x))
+
+average2 = mean(x)
+sd2 = sd(x)
+
+c(average = average2, sd = sd2)
+```
+
+The standard unit of a value, z, tells how many standard deviations a value is away from the mean:
+$$z = \frac{x-\mu}{\sigma}$$
+
+You can compute the standard value (z-value) using the scale() function:
+```{r}
+z = scale(x)
+head(z)
+```
+The probability of the value being less than two standard deviations away from the mean can be calculated using:
+```{r}
+mean(abs(z) < 2)
+```  
+
+The 68-95-99.7 Rule refers to the proportion of the data between 1-2-3 standard deviations from the mean.  
+
+* The pnorm(a, avg, s) is the cdf for the normal distribution (i.e F(a) = pnorm(a, avg, s))
+For example, the probability that a male is taller than 70.5 inches:
+```{r}
+x = heights %>% filter(sex == "Male") %>% pull(height)
+1-pnorm(70.5,mean(x),sd(x))
+```
+
+* The normal distribution is defined for continuous variables
+* In some cases, like the heights case, it is important to discretize the data. In this case, the rounding of some of the data to the nearest inch skews the data to favor integers which discredits the heights that were more specific or in between two integer heights.
+* Probabilities are defined for intervals, not specific values. In our heights case, it is useful to use intervals that include exactly one integers.
+
+Here is an example of the heights data with intervals that include a round number (based on data vs. approximation):
+```{r}
+plot(prop.table(table(x)), xlab = "a = Height in inches", ylab = "Pr(x=a)")
+
+mean(x <= 68.5) - mean(x <= 67.5)
+mean(x <= 69.5) - mean(x <= 68.5)
+mean(x <= 70.5) - mean(x <= 69.5)
+
+pnorm(68.5, mean(x), sd(x)) - pnorm(67.5, mean(x), sd(x))
+pnorm(69.5, mean(x), sd(x)) - pnorm(68.5, mean(x), sd(x))
+pnorm(70.5, mean(x), sd(x)) - pnorm(69.5, mean(x), sd(x))
+```
+
+Here is an example of an interval that does not include a round number (based on data vs. approximation):
+```{r}
+mean(x <= 70.9) - mean(x <= 70.1)
+pnorm(70.9, mean(x), sd(x)) - pnorm(70.1, mean(x), sd(x))
+```
+
+---
+
+#### 1.3 Quantiles, Percentiles, and Boxplots
+
+* A quantile is a cutoff point that divides a dataset into intervals with set probability. The *q*th quantile is the value at which q% of the observations are equal to or less than that value.
+* quantile(data,q) will find the *q*th quantile of data
+* Percentiles are the quantiles that divide a dataset into 100 intervals with 1% probability each. 
+* Percentiles can be determined with quantile(data, seq(.01,.99,.01))
+* Quartiles divide the dataset into 4 parts with 25% probability each, equal to the 25th (1st), 50th (median), and 75th (3rd) percentiles.
+* The summary() function returns the min, quartiles, and max of a dataset
+Example with the heights dataset:
+```{r}
+summary(heights$height)
+p = seq(.01,.99,.01)
+percentiles = quantile(heights$height, p)
+percentiles[names(percentiles) == "25%"]
+percentiles[names(percentiles) == "75%"]
+quantile(heights$height, .12)
+```
+
+##### qnorm()
+
+* qnorm(p, mu, sigma) gives the quantile given the distribution is a normal distribution with mean mu, and sd sigma.
+* Note that mu and sigma default to 0 and 1, respectively (standard normal dist)
+* qnorm is the inverse function of pnorm:
+```{r}
+pnorm(-1.96)
+qnorm(0.025)
+qnorm(pnorm(1.34234252))
+```
+* qnorm can be used to determine the theoretical quantiles of a dataset.
+```{r}
+p = seq(.01,.99,.01)
+theor_quant = qnorm(p,69,3)
+```
+
+##### Quantile-Quantile Plots
+
+* q-q plots are a good way to see if the normal distrubution is a good approximation.
+* If the quantiles for the data match the quantile for the normal distrubution, then the normal distrubution is most likely a good approximation.
+Example using the heights dataset:
+```{r}
+index = heights$sex == "Male"
+x = heights$height[index]
+z = scale(x)
+p = seq(.05,.95,.05)
+obs_quant = quantile(x,p)
+theo_quant = qnorm(p, mean(x),sd(x))
+plot(theo_quant, obs_quant)
+abline(0,1)
+```
+Because the q-q plot closely matches the line, the normal distribution is a good approximation.
+
+##### Boxplots
+
+* Boxplots are a 5 number summary: the min, max, 25th, 50th, and 75th quantiles with outliers as independent points
+* The box is the 25th, and 75th quantile, the median is the line in the middle, and the edges of the lines are the min and max.
+* Interquartile range is the range between 25th and 75th quantiles
+
+#### 1.4 Exploratory Data Analysis
+* If a dist is not normal, it cannot be summarized with only the mean and sd. Provide a histogram, smooth density, or boxplot instead.
+* A plot can force us to see unexpected results that make us questions the quality or implications of our data.
+
+---
+
+### Section 2: Intro to ggplot2
+
+#### 2.1 Basics of ggplot2
+
+* ggplot2 is part of the tidyverse package. Load using library(tidyverse) or library(ggplot2)
+* ggplot2 is generally more intuitive - based on using "building blocks" to create plots
+* Works exclusively with data tables with rows being observations and columns variables
+* Cheat sheet for ggplot2 functions: Help -> Cheat Sheets -> Data Visualization with ggplot2
+* Plots in ggplot2 consist of 3 main components:   
+i) Data Component: The data set being summarized  
+ii) Geometry Component: The type of plot  
+iii) Aesthetic Mapping: Variables mapped to visual cues (e.g axes and color)  
+
+To first create a plot with ggplot2, you need to create a ggplot object (2 ways below):
+```{r}
+library(tidyverse)
+library(dslabs)
+data(murders)
+
+p = ggplot(data=murders) # Method 1
+p = murders %>% ggplot() # Method 2
+class(p)
+```
+
+---
+
+#### 2.2 Customizing Plots
+
+* in ggplot2, graphs are created by adding layers. This is done by using +:
+* DATA %>% ggplot() + LAYER_1 + LAYER_2 + ... + LAYER_N
+* The geometry layer defines the plot type and takes the form geom_X, where X is the plot type
+* aes() is used to define aesthetic mappings
+* aes() uses variable names from the object component (e.g total rather than murders$total)
+* geom_point() creates a scatter plot and requires x and y aesthetic mappings
+* geom_text() and geom_label() add text to a scatterplot and require, x, y, and label aesthetic mappings (text just adds the text, label adds a box with the text instead of the points)
+* You can add layers with different aesthetic mappings to the same graph  
+
+Example using the murders dataset:
+```{r}
+murders %>% ggplot() + geom_point(aes(x=population/10^6, total))
+```
+
+You can also use a predefined ggplot object:
+```{r}
+p = ggplot(data=murders)
+p + geom_point(aes(population/10^6, total)) + geom_text(aes(population/10^6, total, label = abb))
+```  
+
+Here are some ways to tinker with the graph:
+```{r}
+#Changes Size Of Points
+p + geom_point(aes(population/10^6, total), size = 3) +
+  geom_text(aes(population/10^6, total, label = abb))
+
+#Moves Text Labels to the Right
+p + geom_point(aes(population/10^6, total), size = 3) +
+  geom_text(aes(population/10^6, total, label = abb), nudge_x = 1)
+
+#Simplify Code by Adding a Global Aesthetic
+p <- murders %>% ggplot(aes(population/10^6, total, label = abb))
+p + geom_point(size = 3) +
+  geom_text(nudge_x = 1.5)
+
+#Local Aesthetic Overrides Global Aesthetics
+p + geom_point(size = 3) +
+  geom_text(aes(x = 10, y = 800, label = "Hello there!"))
+```
+
+##### Scales, Labels, and Colors
+
+* Convert the x-axis to log scale with scale_x_continuous(trans = "log10") or scale_x_log10() (similar for y-axis)
+* Add axis titles with xlab() and ylab()
+* Add plot title with ggtitle()
+* Add a color mapping by using col argument in aes(). To make all same color, define col outside of aes()
+* Add a line with the geom_abline() which takes slope and intercept that have default 1 and 0 respectivly. Change the color with col and the line type with lty.
+* Place the line layer before the points to have the points on top of the line, or vice-versa.
+
+Here is the above applied to the murders data set (scaling axes, adding titles/labels to plot/axes, changing the color for the region, adding a line for average murder rate, and adding a legend):
+```{r}
+
+p <- murders %>% #Globally define p
+  ggplot(aes(population/10^6, total, label = abb)) + #Add points with label
+  geom_text(nudge_x = 0.075) + # Slightly move the labels
+  scale_x_log10() + #Scale the x-axis
+  scale_y_log10() + #Scale the y-axis
+  xlab("Population in millions (log scale)") + #Add x-label
+  ylab("Total number of murders (log scale)") + #Add y-label
+  ggtitle("US Gun Murders in 2010") #Add plot title
+
+r <- murders %>% #Define the murder rate
+    summarize(rate = sum(total) / sum(population) * 10^6) %>%
+    pull(rate)
+p + 
+    geom_abline(intercept = log10(r), lty = 2, color = "darkgrey") + #Adding dark gray, dashed line
+    geom_point(aes(col = region), size = 3) + #Resize the points, color by region, and add legend
+    scale_color_discrete(name = "Region") #Retitle the legend
+```
+
+##### Add-on Packages to Support ggplot2
+
+Add-on packages are listed below:
+```{r}
+library(ggrepel)
+library(ggthemes)
+```
+The ggrepel package includes a function that makes sure text labels do not overlap with each other, and ggthemes adds themes to use. Here's an example of two of the themes:
+```{r}
+install.packages("ggthemes")
+install.packages("ggrepel")
+library(ggrepel)
+library(ggthemes)
+p + theme_economist()
+p + theme_fivethirtyeight()
+```
+
+Using these packages, we can round off the graph. 
+```{r}
+murders %>%
+    ggplot(aes(population/10^6, total, label = abb)) +
+    geom_abline(intercept = log10(r), lty = 2, color = "darkgrey") +
+    geom_point(aes(col = region), size = 3) +
+    geom_text_repel() +
+    scale_x_log10() +
+    scale_y_log10() +
+    xlab("Population in millions (log scale)") +
+    ylab("Total number of murders (log scale)") +
+    ggtitle("US Gun Murders in 2010") +
+    scale_color_discrete(name = "Region") +
+    theme_economist()
+```
+
+##### Other Plot Examples
+
+* geom_histogram() creates a histogram. Use **binwidth** argument to change the width of the bins, the **fill** to change the bar fill color, and **col** to change the bar outline color
+* geom_density() creates smooth density plots. Change the fill color with the **fill** argument
+* geom_qq() creates a q-q plto. This geometry requires the **sample** argument. By default, the data is compared to a standard normal dist. This can be changed with the **dparams** argument
+* Plots can be arranged adjacent to each other using the grid.arrange() function from the gridExtra package. First create the plots and save them to objects, the pass the plot objects through grid.arrange()
+
+Histogram Example:
+```{r}
+data(heights)
+p = heights %>%
+  filter(sex == "Male") %>%
+  ggplot(aes(x=height))
+
+p + geom_histogram(binwidth = 1, fill = "blue", col = "black") +
+  xlab("Male heights in inches") +
+  ggtitle("Histogram")
+```
+
+Smooth Density Example:
+```{r}
+p = heights %>%
+  filter(sex == "Male") %>%
+  ggplot(aes(x=height))
+
+p + geom_density(fill = "blue")
+
+heights %>%
+ggplot(aes(height, grou = sex, color = sex, fill = sex)) +
+geom_density(alpha = .2)
+```
+
+Q-Q Plot Examples:
+```{r}
+#Basic qq plot
+p = heights %>% filter(sex == "Male") %>%
+  ggplot(aes(sample = height))
+p + geom_qq()
+
+#qq plot with normal dist
+params = heights %>%
+  filter(sex == "Male") %>%
+  summarize(mean = mean(height), sd = sd(height))
+p + geom_qq(dparams = params) + geom_abline()
+
+#qq plots of scaled data against the standard normal
+heights %>%
+  ggplot(aes(sample = scale(height))) +
+  geom_qq() +
+  geom_abline()
+```
+
+Grid of plots example:
+```{r}
+library(gridExtra)
+p = heights %>% filter(sex == "Male") %>% ggplot(aes(x=height))
+p1 = p +geom_histogram(binwidth = 1, fill = "blue", col = "black")
+p2 = p +geom_histogram(binwidth = 2, fill = "blue", col = "black")
+p3 = p +geom_histogram(binwidth = 3, fill = "blue", col = "black")
+
+grid.arrange(p1,p2,p3, ncol = 3)
+```
+
+---
+
+### Section 3: Summarizing with dplyr
+
+#### 3.1 Summarizing with dplyr
+
+* summarize() from the dplyr package computes summary statistics from a data frame and returns a data frame whose column names are defined with the function call.
+* summarize() can compute any summary function that operates on vectors and returns a single value, but it cannot operate on functions that return multiple values.
+
+Example of summarize() using heights:
+```{r}
+data(heights)
+
+s = heights %>%
+  filter(sex == "Male") %>%
+  summarize(average = mean(height), standard_deviation = sd(height))
+s$average
+s$standard_deviation
+
+heights %>%
+  filter(sex == "Male")%>%
+  summarize(median = median(height),
+            minimum = min(height),
+            maximum = max(height))
+```
+
+Example of code that would error when using summarize() on a function that returns multiple values:
+```{r, eval = F}
+heights %>%
+  filter(sex == "Male") %>%
+  summarize(range = quantile(height, c(0, 0.5, 1)))
+```
+
+##### The Dot Placeholder
+* The dot operator allows you to access values stored in data that is being piped using the %>% character. THe dot is a placeholder for the data being passed in throught the pipe. 
+* The dot operator allows dplyr functions to return single vectors or numbers instead of only data frames.
+* An equivalent way to extract a single column using the pip is us_murder_rate %>% pull(rate)
+
+Example using the murders dataset:
+```{r}
+data(murders)
+
+#This is incorrect mean murders because it doesn't weight by population
+murders = murders %>% mutate(murder_rate = total/population*100000)
+summarize(murders, mean(murder_rate))
+
+#Calculate rate using a data frame
+us_murder_rate = murders %>%
+  summarize(rate = sum(total)/sum(population)*100000)
+us_murder_rate
+
+#Using dot placeholder to access rate
+us_murder_rate %>% .$rate
+
+#extract rate with one pipe
+us_murder_rate = murders %>%
+  summarize(rate = sum(total)/sum(population) * 100000) %>%
+  .$rate
+```
+
+
+##### Group By Function
+
+* The group_by() function from dplyr converts a data frame to a grouped data frame, creating groups using one more more variables.
+* summarize() and some other dplyr functions will behave differently on grouped data frames.
+* Using summarize() on a grouped data frame computes the summart statistics for each of the separate groups.
+
+Examples:
+```{r}
+data(heights)
+data(murders)
+
+#Group heights by male and female
+heights %>%
+  group_by(sex) %>%
+  summarize(average = mean(height), standard_deviation = sd(height))
+
+#Group median murders by region
+murders = murders %>%
+  mutate(murder_rate = total/population*100000)
+murders %>%
+  group_by(region) %>%
+  summarize(mediate_rate = median(murder_rate))
+```
+
+##### Sorting Data Tables
+
+* The arrange() function from dplyr sorts a data frame by a given column
+* By default, arrange() sorts in ascending order. To instead sort in descending order, use the function desc().
+* You can arrange() by multiple levels: within equivalent values of the first level, overservations are sorted by the second level, and so on.
+* The top_n() function shows the top results ranked by a given variabel, but the results are not ordered. You can combine top_n() with arrange() to return the top results in order.
+
+Examples using the murders data:
+```{r}
+murders = murders %>%
+  mutate(murder_rate = total/population *100000)
+
+#Arrange by population column
+murders %>% arrange(population) %>% head()
+
+#Arrange by murder rate
+murders %>% arrange(murder_rate) %>% head()
+
+#Arrange by murder rate in descending order
+murders %>% arrange(desc(murder_rate)) %>% head()
+
+#Arrange by region alphabetically, then by murder rate within each region
+murders %>% arrange(region, murder_rate) %>% head()
+
+#Show the top 10 states with the highest murder rate, not ordered by rate
+murders %>% top_n(10, murder_rate)
+
+#Show the top 10 states with the highest murder rate, ordered by rate
+murders %>% arrange(desc(murder_rate)) %>% top_n(10)
+```
+
+---
+
+### Section 4: Gapminder Data Set
+
+#### 4.1 Intro to the Gapminder Dataset
+
+* Using the dataset, we will answer question about world health and economics
+* This will be done with data visualization
+
+Example from the Gapminder Dataset (Infant mortality in Sri Lanka vs. Turkey):
+```{r}
+install.packages("tidyverse")
+library(dslabs)
+library(tidyverse)
+data(gapminder)
+head(gapminder)
+
+gapminder %>%
+  filter(year == 2015 & country %in% c("Sri Lanka", "Turkey")) %>%
+  select(country, infant_mortality)
+```
+
+Plotting Fertility vs. Life Expectancy in 1962:
+```{r}
+ds_theme_set()
+filter(gapminder, year == 1962) %>%
+  ggplot(aes(fertility, life_expectancy, color = continent)) +
+  geom_point()
+```
+
+---
+
+#### 4.2 Using the Gapminder Dataset
+
+##### Faceting
+
+* Faceting makes multiple side-by-side plots stratified by some variable.
+* The *facet_grid()* function allows faceting by up to two variables, with rows faceted by one variable and columns faceted by the other variable. To facet by only one variable, use the dot operator at the other variable.
+* The *facet_wrap()* function facets by one variable and automatically wraps the series of plots so they have readable dimensions.
+* Faceting keeps the axes fixed across all plots.
+
+Example to compare the fertility rate vs. life expectancy in 1962 and 2012:
+```{r}
+#facet by continent and year
+filter(gapminder, year %in% c(1962, 2012)) %>%
+  ggplot(aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_grid(continent ~ year)
+
+#facet by year
+filter(gapminder, year %in% c(1962, 2012)) %>%
+  ggplot(aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_grid(. ~ year)
+
+#facet by year, plots wrapped in multiple rows
+years = c(1962, 1970, 1980, 1990, 2000, 2012)
+continents = c("Europe", "Asia")
+gapminder %>%
+  filter(year %in% years & continent %in% continents) %>%
+  ggplot(aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_wrap(~year)
+```
+
+##### Time Series Plots
+
+* Time Series Plots have time on the x-axis and a variable of interest on the y-axis
+* The geom_line() geometry connects adjacent data points to form a continuous line. A line plot is appropriate when points are regularly spaced, densely packed from a single data series.
+* You can plot multiple lines on the same graph. Remember to group or color by a variable so that the lines are plotted independently.
+* Labeling is usually preferred over legends. However, legends are easier to make and appear by default. Add a label with geom_text(), specifying the coordinates where the label should appear on the graph.
+
+Single Time Series Example:
+```{r}
+gapminder %>%
+  filter(country == "United States") %>%
+  ggplot(aes(year, fertility)) +
+  geom_point()
+
+gapminder %>%
+  filter(country == "United States") %>%
+  ggplot(aes(year, fertility)) +
+  geom_line()
+```
+
+Multiple Time Series Example:
+```{r}
+countries = c("South Korea","Germany")
+gapminder %>% filter(country %in% countries) %>%
+  ggplot(aes(year,fertility, group = country, col = country)) +
+  geom_line()
+```
+
+Adding Text Labels to Plot:
+```{r}
+labels = data.frame(country = countries, x = c(1975,1965), y = c(60,72))
+gapminder %>% filter(country %in% countries) %>%
+  ggplot(aes(year, life_expectancy, col = country)) +
+  geom_line() +
+  geom_text(data=labels, aes(x,y, label = country), size = 5) +
+  theme(legend.position = "none")
+```
+* x and y are the coordinates of the labels (x1,y1 for SK, and x2,y2 for Germany)
+
+##### Transformations
+
+* Log transformations conver multiplicative changes into additive changes.
+* Common transformations are the log base 2 transformation and the log base 10 transformation. The choice of base depends on the range of the data. The natural log is not recommended because the it is difficult to interpret.
+* The mode of a distribution is the value with the highest frequency. The mode of a normal dist is the average. A dist can have multiple local modes.
+* There are two ways to use log transformations in plots: transform the data before plotting or transform the axes of the plot. Log scales have the advantage of showing the original values as axis labels, while log transformed values east interpretation of intermediate values between labels.
+* Scale the x-axis using scale_x_continuous() or scale_x_log10() layers in ggplots2. Similar functions exist for the y-axis.
+
+Example using income:
+```{r}
+gapminder = gapminder %>%
+  mutate(dollars_per_day = gdp/population/365)
+
+#histogram of dollars per day
+past_year = 1970
+gapminder %>%
+  filter(year == past_year & !is.na(gdp)) %>%
+  ggplot(aes(dollars_per_day)) +
+  geom_histogram(binwidth = 1, color = "black")
+
+#repeat with log2 scaled data
+gapminder %>%
+  filter(year == past_year & !is.na(gdp)) %>%
+  ggplot(aes(log2(dollars_per_day))) +
+  geom_histogram(binwidth = 1, color = "black")
+
+#repeat with log2 scaled x-axis
+gapminder %>%
+  filter(year == past_year & !is.na(gdp)) %>%
+  ggplot(aes(dollars_per_day)) +
+  geom_histogram(binwidth = 1, color = "black") +
+  scale_x_continuous(trans = "log2")
+```
+
+##### Stratify and Boxplot
+
+* Make boxplots stratified by a categorical variable using geom_boxplot()
+* Rotate axis labels by changing the theme throught element_text(). You can change the angle and justification of the text labels.
+* Consider order your factors by a meaningful value with the reorder() function, which changes the order of factor levels based on a related numeric vector. This is a way to ease comparisons.
+* Show the data by adding data points to teh boxplot with a geom_point() layer. This adds information beyond the five-number summary to your plot, but too many data points it can obfuscate your message.
+
+Box plot of GDP by region:
+```{r}
+gapminder = gapminder %>%
+  mutate(dollars_per_day = gdp/population/365)
+
+#number of regions
+length(levels(gapminder$region))
+
+#create boxplot and rotate x-axis text
+past_year = 1970
+p = gapminder %>%
+  filter(year == past_year & !is.na(gdp)) %>%
+  ggplot(aes(region, dollars_per_day))
+p + geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust =1))
+```
+
+Example of how the reorder function is used:
+```{r}
+fac = factor(c("Asia", "Asia", "West", "West", "West"))
+levels(fac)
+
+value = c(10, 11, 12, 6, 4)
+fac = reorder(fac, value, FUN = mean)
+levels(fac)
+```
+
+Example combining reorder with boxplots (order by median dollars/day):
+```{r}
+p = gapminder %>%
+  filter(year == past_year & !is.na(gdp)) %>%
+  mutate(region = reorder(region, dollars_per_day, FUN = median)) %>%
+  ggplot(aes(region, dollars_per_day, fill = continent)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("")
+p
+
+#log2 scale y-axis and add points
+p + scale_y_continuous(trans = "log2") + geom_point(show.legend = F)
+```
+
+##### Comparing Distributions
+
+* Use *intersect()* to find the overlap between two vectors.
+* To make boxplots where grouped variables are adjacent, color the boxplot by a factor instead of faceting by that factor. This is a way to ease comparisons.
+
+Example using wealth gap between rich and poor over the years:
+```{r}
+gapminder = gapminder %>%
+  mutate(dollars_per_day = gdp/population/365)
+past_year = 1970
+
+west = c("Western Europe", "Northern Europe", "Southern Europe", "Northern America", "Australia and New Zealand")
+
+#facet by west vs. developing
+gapminder %>%
+  filter(year == past_year, !is.na(gdp)) %>%
+  mutate(group = ifelse(region %in% west, "West", "Developing")) %>%
+  ggplot(aes(dollars_per_day)) +
+  geom_histogram(binwidth = 1, color = "black") +
+  scale_x_continuous(trans = "log2") +
+  facet_grid(.~group)
+
+#facet by west/developing and year
+present_year = 2010
+gapminder %>%
+  filter(year %in% c(past_year, present_year) & !is.na(gdp)) %>%
+  mutate(group = ifelse(region %in% west, "West", "Developing")) %>%
+  ggplot(aes(dollars_per_day)) +
+  geom_histogram(binwidth = 1, color = "black") +
+  scale_x_continuous(trans = "log2") +
+  facet_grid(year ~ group)
+```
+
+Income distribution of West vs. Developing only with countries with data in both years:
+```{r}
+#Get countries that have data in both 1970 and 2010
+country_list_1 = gapminder %>%
+  filter(year == past_year & !is.na(dollars_per_day)) %>% .$country
+country_list_2 = gapminder %>%
+  filter(year == present_year & !is.na(dollars_per_day)) %>% .$country
+country_list = intersect(country_list_1, country_list_2)
+
+#Remake histogram with these countries
+gapminder %>%
+    filter(year %in% c(past_year, present_year) & country %in% country_list) %>%    # keep only selected countries
+    mutate(group = ifelse(region %in% west, "West", "Developing")) %>%
+    ggplot(aes(dollars_per_day)) +
+    geom_histogram(binwidth = 1, color = "black") +
+    scale_x_continuous(trans = "log2") +
+    facet_grid(year ~ group)
+```
+
+Boxplots of income disparity:
+```{r}
+p = gapminder %>%
+  filter(year %in% c(past_year, present_year) & country %in% country_list) %>%
+  mutate(region = reorder(region, dollars_per_day, FUN = median)) %>%
+  ggplot() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  xlab("") + scale_y_continuous(trans = "log2")
+
+p +geom_boxplot(aes(region, dollars_per_day, fill = continent)) +
+  facet_grid(year ~.)
+
+#Arrange boxplots next to each other by year
+p + geom_boxplot(aes(region, dollars_per_day, fill = factor(year)))
+```
+
+##### Density Plots
+
+* Change the y-axis of density plots to variable using *..count..* as the y argument.
+* The *case_when()* function defines a factor whose levels are defined by a variety of logical operations ot group data.
+* Plot stacked density plots using *position = "stack"*
+* Define a weight aesthetic mapping to change the relative weights of density plots. For example, this allows weighting of plot by populations rather than number of counties.
+
+Example of smooth density plots:
+```{r}
+#First get the number of countries in each of the regions (West and Developing)
+gapminder %>%
+  filter(year == past_year & country %in% country_list) %>%
+  mutate(group = ifelse(region %in% west, "West", "Developing")) %>% group_by(group) %>%
+  summarize(n = n()) %>% knitr::kable()
+
+#Create the smooth density plot - Variable counts on the y axis
+p = gapminder %>%
+  filter(year %in% c(past_year, present_year) & country %in% country_list) %>%
+  mutate(group = ifelse(region %in% west, "West", "Developing")) %>%
+  ggplot(aes(dollars_per_day, y = ..count.., fill=group)) +
+  scale_x_continuous(trans = "log2")
+p + geom_density(alpha = .2) + facet_grid(year ~.)
+```
+
+Using case_when(), the creating a non-weighted, then weighted stacked density plot:
+```{r}
+#Add group as a factor and group the regions
+gapminder = gapminder %>%
+  mutate(group = case_when(
+    .$region %in% west ~ "West",
+    .$region %in% c("Eastern Asia", "South-Eastern Asia") ~ "East Asia",
+    .$region %in% c("Caribbean", "Central America", "South America") ~ "Latin America",
+    .$continent == "Africa" & .$region != "Northern Africa" ~ "Sub-Saharan Africa",
+    TRUE ~ "Others"))
+
+#reorder region factor levels
+gapminder = gapminder %>%
+  mutate(group = factor(group, levels = c("Others", "Latin America", "East Asia", "Sub-Saharan Africa", "West")))
+
+#Stacked density plot
+p = gapminder %>%
+  filter(year %in% c(past_year, present_year) & country %in% country_list) %>%
+  ggplot(aes(dollars_per_day, fill = group)) +
+  scale_x_continuous(trans = "log2")
+p + geom_density(alpha = .2, bw = .75, position = "stack") +
+  facet_grid(year ~ .)
+
+#Weighted Stacked density plot
+gapminder %>%
+  filter(year %in% c(past_year, present_year) & country %in% country_list) %>%
+  group_by(year) %>%
+  mutate(weight = population/sum(population*2)) %>%
+  ungroup() %>%
+  ggplot(aes(dollars_per_day, fill = group, weight = weight)) +
+  scale_x_continuous(trans = "log2") +
+  geom_density(alpha = .2, bw = .75, position = "stack") +
+  facet_grid(year ~.)
+```
