@@ -2968,3 +2968,34 @@ two_by_two %>%
 
 ## Course 5: Productivity Tools
     
+### Section 2: Basic Unix
+
+#### Introduction to Unix
+
+* The terminal helps to organize files in a system
+* On windows, use the Git bash program
+* We refer to all the files, folder, and programs (executables) on your computer as the **filesystem**.
+* Your filesystem is organized as a series of nested folders each containing files, folders, and executables.
+* In Unix, folders are referred to as directories and directories that are inside other directories are often referred to as subdirectories.
+* The home directory is where all your stuff is kept. There is a hierarchical nature to the file system.
+* The working directory is the current location.
+* Each terminal window has a working directory associated with it.
+* The **"pwd"** command will display your working directory. The "/" symbol separates directories, while the first "/" at the beginning of the path stands for the root directory. WHen a path starts with "/", it is a "full path", which finds the currect directory from the root directory.
+* "~" means the home directory
+
+##### Unix Commands
+
+```
+ls #list dir content
+mkdir folder_name #create directory called folder_name
+rmdir folder_name #remove and empty directory as long as it is empty
+rem -r folder_name # remove fir that is not empty, "r" stands for recursive
+
+cd #change directory
+../ #two dots represents parent directory
+. #single dot represents working directory
+cd ~/projects #concatenate with forward slashes
+cd ../.. #change to two parent layers beyond
+cd - #whatever dir you were before
+cd #return to the home dir
+```
