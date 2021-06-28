@@ -2980,8 +2980,12 @@ two_by_two %>%
 * The home directory is where all your stuff is kept. There is a hierarchical nature to the file system.
 * The working directory is the current location.
 * Each terminal window has a working directory associated with it.
-* The **"pwd"** command will display your working directory. The "/" symbol separates directories, while the first "/" at the beginning of the path stands for the root directory. WHen a path starts with "/", it is a "full path", which finds the currect directory from the root directory.
+* The **"pwd"** command will display your working directory. The "/" symbol separates directories, while the first "/" at the beginning of the path stands for the root directory. When a path starts with "/", it is a "full path", which finds the current directory from the root directory.
 * "~" means the home directory
+* Can auto-complete commands and file names with Tab
+* "\" can be used to concatenate (e.g. Course\ 1 is Course 1)
+* **WARNING** mv doesn't ask to confirm and could overwrite files, rm is permanent
+* Can use move command to 
 
 ##### Unix Commands
 
@@ -2998,4 +3002,86 @@ cd ~/projects #concatenate with forward slashes
 cd ../.. #change to two parent layers beyond
 cd - #whatever dir you were before
 cd #return to the home dir
+
+mv path-to-file path-to-destination-directory #moves file
+rm filename-1 filename-2 filename-3 #removes files
+mv old-name new-name #If in correct directory, use this to rename files (can combine to move and rename)
+cp path-to-file path-to-destination #copies file to destination
+
+less file-name #lets you quickly look at contents of a file (can use q to exit and arrows to navigage)
 ```
+
+Downloading data to a directory using R-studio (use getwd() to find working directory and then use relative paths):
+```
+getwd()
+url = "https://raw.githubusercontent.com/rafalab/dslabs/master/inst/extdata/murders.csv"
+dest_file = "Course 5/murders/data/murders.csv"
+download.file(url,destfile=dest_file)
+```
+
+Wrangle the data:
+```
+murders = read_csv("Course 5/murders/data/murders.csv")
+murders = murders %>% mutate(region = factor(region), rate = total/population *10^5)
+save(murders, file = "Course 5/murders/rda/murders.rda")
+```
+
+Saving figures to a file:
+```
+murders %>% mutate(abb = reorder(abb, rate)) %>%
+  ggplot(aes(abb,rate)) +
+  geom_bar(width = .5, stat = "identity", color = "black") +
+  coord_flip()
+
+ggsave("Course 5/murders/figs/barplot.png")
+```
+#### R Markdown
+
+* Can use CTRL-ALT-I to create code block
+* Can use echo = FALSE to make it now show the result of the code but still run
+* Can add descriptions to code block (e.g ```{r pressure-summary})
+* Can output as html, pdf, word, or github document
+
+#### Git and Github
+
+* Version control allows us to go back to previous versions of files
+* Git(hub) can be collaborative (Pull Request can be used to request changes in code)
+* Github makes it easy to share code and reports
+* 4 different areas: Working Directory, Staging Area, Local Repository, Upstream Repository
+* Clone an existing upstream repository (copy repo url from clone button, and type "git clone <url>"), and all three local stages are the same as the upstream remote
+* The working directory is the same as the working directory in Rstudio. When we edit files we only change the files in this place.
+* **git status**: tells how the files in the working directory are related to the files in other stages
+* edits in the staging area are not tracked by the version control system by default -  we add a file to the staging area by **git add* command.
+* **git commit**: to commit files from the staging area to the local repository, we need to add a message stating what we are doing by *git commit -m "something"**
+* **git log**: keeps track of all the changes we have made to the local repository.
+* **git push** allows moving from the local repository to upstream repository, only if you have the permission.
+* **git fetch**: update local repository to be like the upstream repository, from upstream to local.
+* **git merge**: make the updated local sync with the working directory and staging area.
+* To change everything in one shot (from upstream to working dir), use **git pull** (equivalent to **git fetch + git merge**).
+
+Adding files using the command line:
+```
+pwd
+mkdir git-example
+cd git-example
+git clone https://github.com/rairizarry/murders.git
+cd murders
+ls
+git status
+echo "test" >> new-file.txt
+echo "temporary" >> tmp.txt
+git add new-file.txt
+git status
+git commit -m "adding a new file" 
+git status
+echo "adding a second line" >> new-file.txt
+git commit -m "minor change to new-file" new-file.txt
+git status
+git add
+git log new-file.txt
+git push
+git fetch
+git merge
+```
+
+![Git Commands](C:\Users\conno\OneDrive\Documents\Data Science Certificate\HarvardxDataScienceCertificate\Course 5\images/GitCommands.png)
