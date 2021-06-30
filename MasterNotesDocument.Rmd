@@ -8,7 +8,7 @@ output:
 
 ---
 ```{r, echo = F, eval = F}
-install.packages("tidyverse", "dslabs", "NHANES","ggthemes", "ggrepel","gridExtra", "dplyr","RColorBrewer")
+install.packages("tidyverse", "dslabs", "NHANES","ggthemes", "ggrepel","gridExtra", "dplyr","RColorBrewer", "readxl")
 library(tidyverse)
 library(dslabs)
 library(NHANES)
@@ -18,6 +18,7 @@ library(gridExtra)
 library(dplyr)
 library(RColorBrewer)
 library(gtools)
+library(readxl)
 ```
 
 
@@ -2970,7 +2971,7 @@ two_by_two %>%
     
 ### Section 2: Basic Unix
 
-#### Introduction to Unix
+#### Section 1: Introduction to Unix
 
 * The terminal helps to organize files in a system
 * On windows, use the Git bash program
@@ -3035,14 +3036,14 @@ murders %>% mutate(abb = reorder(abb, rate)) %>%
 
 ggsave("Course 5/murders/figs/barplot.png")
 ```
-#### R Markdown
+### Section 3: R Markdown
 
 * Can use CTRL-ALT-I to create code block
 * Can use echo = FALSE to make it now show the result of the code but still run
 * Can add descriptions to code block (e.g ```{r pressure-summary})
 * Can output as html, pdf, word, or github document
 
-#### Git and Github
+### Section 4: Git and Github
 
 * Version control allows us to go back to previous versions of files
 * Git(hub) can be collaborative (Pull Request can be used to request changes in code)
@@ -3064,7 +3065,7 @@ Adding files using the command line:
 pwd
 mkdir git-example
 cd git-example
-git clone https://github.com/rairizarry/murders.git
+git clone https://github.com/ConnorBruce/murders.git
 cd murders
 ls
 git status
@@ -3085,3 +3086,146 @@ git merge
 ```
 
 ![Git Commands](C:\Users\conno\OneDrive\Documents\Data Science Certificate\HarvardxDataScienceCertificate\Course 5\images/GitCommands.png)
+
+##### Creating Github Repository
+
+* One way is cloning an existing repository, the other is initializing our own
+* Create our own project on our computer on our own machine
+* Create an upstream repo on Github, copy repo's url
+* Make local git repository: On the local machine, int he project directory, use **git init**. Not git starts tracking everything in the local repo.
+* Now we need to start moving files into out local repo and connect local repo to the upstream remote by **git remote add origin <url>**.
+* Note: The first time you push to a new repository, you may also need to use these git push options: **git push --set-upstream origin master**.
+
+```
+git init
+git add README.txt
+git commit -m "First commit. Adding README.txt file just to get started"
+git remote add origin "https://github.com/ConnorBruce/murders.git"
+git push    # you may need to add these arguments the first time: --set-upstream origin master
+```
+### Section 5: Advanced Unix
+
+##### Arguments
+
+* Arguments typically are defined using a dash or two dashes followed by a letter or a word
+* **r**: recursive. For example **rm -r <directory-name>**: removes all files, subdirectories, files in subdirectories, subdirectories in subdirectories, etc...
+* Combine arguments: **rm -rf directory-name**
+* **ls -a**: Shows all files in the directories including hidden files (a for all)
+* **ls -l**: Returns more information about the files (l for long)
+* **ls -t**: Shows files in chronological order
+* **ls -r**: Reverses the order of how the files are shown
+* **ls -lart**: Shows more information for all the files in reverse order (combines the last 4)
+
+##### Getting Help and Pipes
+
+* Getting Help: Use **man + command name** to get help (e.g. **man ls**). Not that this is not available for Git Bash. For Git Bash, you can use **command --help** (e.g. **ls --help**)
+* Pipes: Pipes the results of a command to the command after the pipe. Similar to the pipe %>% in R. For example, **man ls | less**.
+
+##### Wild Cards
+
+* star means any number of any combination of characters. Specifically, to list all html files **star.html**
+* ? means any single character. For example, to erase all files in the form **file-001.html** with the numbers going from 1 to 999: **rm -file-???.html**
+
+##### Environment Variables and Shells
+
+* In Unix, variables are distinguished from other entities by adding a dollar sign in front. For example, the home directory is stores in **$HOME**
+* See home directory: **echo $HOME**
+* See them all: **env**
+* See what shell is being used: **echo $SHELL** (most common shell is bash)
+
+##### Executables, Permissions, and File Types
+
+* In Unix, all programs are files. They are called executables. So **ls, mv, and git** are all files.
+* To find where these program files are, use which. For example, **which git** would return /usr/bin/git.
+* Type **ls /usr/bin** to see several executable files. There are other directories that hold program files (e.g Program Files directory on Windows).
+* Type **echo $PATH** to see a list of directories separated by ":".
+* Type the full path to run the user-created executables (e.g. **./my-ls**).
+* Regular file **-**, directory **d**, executable **x**.
+* This string also indicates the permission of the file: is it readable? writable? executable? Can other users on the system read the file? Can other users on the system edit the file? Can other users execute the file if the file is executable?
+
+##### Other Imporant Commands
+
+* Be aware of common commands and know what they do.
+* **start filename**: Tries to figure out the right application of the filename and open it with that application.
+* **nano**: A bare-bones text editor
+* **ln**: Create a symbolic link.
+* **tar**: Archive files and subdirectories of a directory into one file.
+* **ssh**: connect to another computer
+* **grep**: search for patterns in a file
+* **awk/sed**: These are two very powerful commands that permit you to find specific string in files and change them.
+
+## Course 6: Data Wrangling
+
+### Section 1: Data Import
+
+#### Importing Spreadsheets
+
+* Many datasets are stored in spreadsheets. A spreadsheet is essentially a file version of a data frame with rows and columns.
+* Spreadsheets have rows separated by returns and columns separated by a delimiter. The most common delimiters are commas, semicolons, white spaces, and tabs.
+* Many spreadsheets are raw text files and can be read with any basic text editor. However, some formats are proprietary and cannont be read with a text editor, such as Excel Files.
+* Most import functions assume that the first row of a spreadsheet is a header with column names. To know if the file has a header, it helps to look at a file with a text editor before trying to import it.
+
+#### Paths and the Working Directory
+
+* The working directory is where R looks for files and saves files by default
+* See your workign directory with **getwd()**. Change your working directory with **setwd()**
+* we suggest you create a firectory for each project and keep your raw data inside that directory.
+* Use the **file.path()** function to generate a full path from a relative path and a file name. Use **file.path()** instead of **paste()** because **file.path()** is aware of your operating system and will use the correct slashes to navigate your machine.
+* The **file.copy()** function copies a file to a new path.
+
+Code to copy the murders data set to a different directory:
+```
+getwd() #Gets working directory
+newpath = "C:/Users/conno/OneDrive/Documents/Data Science Certificate/HarvardxDataScienceCertificate/Course 6"
+setwd(newpath) #Sets new working directory to newpath
+
+path = system.file("extdata", package = "dslabs") #finds the dslabs file on computer
+list.files(path)
+filename = "murders.csv"
+fullpath = file.path(path, filename)
+fullpath #Gets the full path to the murders.csv file
+
+file.copy(fullpath, getwd()) #copies the murders.csv file to current working directory
+
+file.exists(filename) #verifies that the file was copied
+```
+
+#### The readr and readrxl Packages
+
+* **readr** is the **tidyverse** library that includes functions for reading data stored in text file spreadsheets into R. Function in the package include: **read_csv()**, **read_tsv()**, **read_delim()**, and more. These differ by the delimited they use to split columns.
+* The **readxl** package provides functions to read Excel formatted files.
+* The **excel_sheets()** function gives the names of the sheets in the Excel file. These names are passed to the sheet argument for the readxl functions *read_excel()**, **read_xls()**, and **read_xlsx()**.
+* The **read_lines()** function shows the first few lines of a file in R.
+
+Example using the packages:
+```{r}
+setwd("./Course 6")
+#inspect the first 3 lines
+read_lines("./data/murders.csv", n_max = 3)
+
+#read file in csv format
+dat = read_csv("./data/murders.csv")
+
+#Examples
+path = system.file("extdata", package = "dslabs")
+files = list.files(path)
+files
+
+filename = "murders.csv"
+filename1 = "life-expectancy-and-fertility-two-countries-example.csv"
+filename2 = "fertility-two-countries-example.csv"
+dat = read.csv(file.path(path, filename))
+dat1 = read.csv(file.path(path, filename1))
+dat2 = read.csv(file.path(path, filename2))
+head(dat)
+#head(dat1)
+#head(dat2)
+```
+
+### Section 2: Tidy Data
+
+
+### Section 3: String Processing
+
+
+### Section 4: Dates, Times and Text Mining
