@@ -1,4 +1,4 @@
-install.packages("tidyverse", "dslabs", "NHANES","ggthemes", "ggrepel","gridExtra", "dplyr","RColorBrewer","readxl")
+install.packages("tidyverse", "dslabs", "NHANES","ggthemes", "ggrepel","gridExtra", "dplyr","RColorBrewer","readxl","rvest","htmlwidgets")
 library(tidyverse)
 library(dslabs)
 library(NHANES)
@@ -9,6 +9,8 @@ library(dplyr)
 library(RColorBrewer)
 library(gtools)
 library(readxl)
+library(rvest)
+library(htmlwidgets)
 
 getwd()
 newpath = "C:/Users/conno/OneDrive/Documents/Data Science Certificate/HarvardxDataScienceCertificate/Course 6"
@@ -267,3 +269,228 @@ Master %>% as_tibble()
 awd = AwardsPlayers %>% filter(yearID == 2016)
 left_join(top,awd)
 nrow(anti_join(awd,top) %>% select(playerID) %>% unique())
+
+url = "https://en.wikipedia.org/wiki/Murder_in_the_United_States_by_state"
+h = read_html(url)
+class(h)
+h
+
+tab = h %>% html_nodes("table")
+tab = tab[[2]]
+
+tab = tab %>% html_table()
+class(tab)
+
+tab = tab %>% setNames(c("state","population","total","murders","gun_murders","gun_ownership","total_rate","murder_rate","gun_murder_rate"))
+head(tab)
+
+#For the guac recipe, the selectors have already been determined
+h = read_html("http://www.foodnetwork.com/recipes/alton-brown/guacamole-recipe-1940609")
+recipe = h %>% html_node(".o-AssetTitle__a-HeadlineText") %>% html_text()
+prep_time = h %>% html_node(".m-RecipeInfo__a-Description--Total") %>% html_text()
+ingredients = h %>% html_nodes(".o-Ingredients__a-Ingredient") %>% html_text()
+
+#You can see how complex the selectors are
+guacamole = list(recipe,prep_time,ingredients)
+guacamole
+
+#Since recipes from this website follow this general layout, we can write a function that extracts the information
+get_recipe = function(url){
+  h = read_html(url)
+  recipe = h %>% html_node(".o-AssetTitle__a-HeadlineText") %>% html_text()
+  prep_time = h %>% html_node(".m-RecipeInfo__a-Description--Total") %>% html_text()
+  ingredients = h %>% html_nodes(".o-Ingredients__a-Ingredient") %>% html_text()
+  return(list(recipe = recipe, prep_time = prep_time,ingredients = ingredients))
+  
+}
+
+#Testing function
+get_recipe("http://www.foodnetwork.com/recipes/food-network-kitchen/pancakes-recipe-1913844")
+
+
+#2.3 Assessment
+
+url = "https://web.archive.org/web/20181024132313/http://www.stevetheump.com/Payrolls.htm"
+h = read_html(url)
+
+nodes = html_nodes(h, "table")
+
+html_text(nodes[[8]])
+
+html_table(nodes[[8]])
+
+html_table(nodes[[1]])
+html_table(nodes[[2]])
+html_table(nodes[[3]])
+html_table(nodes[[4]])
+
+html_table(nodes[[21]])
+html_table(nodes[[20]])
+html_table(nodes[[19]])
+
+
+tab_1 = html_table(nodes[[10]])
+tab_1 = tab_1 %>% select(X2,X3,X4) %>% setNames(c("Team","Payroll","Average"))
+tab_1 = tab_1[-1,]
+tab_1
+tab_2 = html_table(nodes[[19]])
+tab_2 = tab_2 %>% setNames(c("Team","Payroll","Average"))
+tab_2 = tab_2[-1,]
+tab_2
+
+full_join(tab_1,tab_2,"Team")
+
+url = "https://en.wikipedia.org/w/index.php?title=Opinion_polling_for_the_United_Kingdom_European_Union_membership_referendum&oldid=896735054"
+h = read_html(url)
+tab = html_nodes(h, "table")
+
+html_table(tab[[5]], fill=T)
+
+url = "https://en.wikipedia.org/w/index.php?title=Gun_violence_in_the_United_States_by_state&direction=prev&oldid=810166167"
+murders_raw = read_html(url) %>%
+  html_nodes("table") %>%
+  html_table() %>%
+  .[[1]] %>%
+  setNames(c("state","population","total","murder_rate"))
+
+head(murders_raw)
+class(murders_raw$population)
+class(murders_raw$total)
+
+s = "Hello!" #double quotes defining a string
+s = 'Hello!' #single quotes defining a string
+
+s = '"Hello!' #double quote in single quot
+cat(s)
+
+s = "5'"
+cat(s)
+
+#To include both double and single quotes in a string, escape with \
+s = '5\'10"'
+cat(s)
+s = "5'10\""
+cat(s)
+
+#detect whether there are any commas
+commas = function(x) any(str_detect(x,","))
+murders_raw %>% summarize_all(funs(commas))
+
+#replace commas with the empty string and convert to numeric
+test_1 = str_replace_all(murders_raw$population,",","")
+test1 = as.numeric(test_1)
+head(test_1)
+class(test1)
+
+#parse_number also removes commas and converts to numeric
+test_2 = parse_number(murders_raw$population)
+head(test_2)
+class(test_2)
+
+murders_new = murders_raw %>% mutate_at(2:3,parse_number)
+murders_new %>% head()
+
+
+#load raw heights data and inspect
+data(reported_heights)
+class(reported_heights$height)
+
+#convert to numeric, inspect, count NAs
+x = as.numeric(reported_heights$height)
+head(x)
+sum(is.na(x))
+
+#keep only entries that result in NAs
+reported_heights %>% mutate(new_height = as.numeric(height)) %>%
+  filter(is.na(new_height)) %>%
+  head(n=10)
+
+#calculate cutoffs that calculate 99.99% of the human population
+alpha = 1/10^6
+qnorm(1-alpha/2,69.1,2.9)
+qnorm(alpha/2,63.7,2.7)
+
+#keep only entries that either results in NAs or are outside plausible range of heights
+not_inches <- function(x, smallest = 50, tallest = 84){
+  inches <- suppressWarnings(as.numeric(x))
+  ind <- is.na(inches) | inches < smallest | inches > tallest
+  ind
+}
+
+#number of problematic entries
+problems = reported_heights %>%
+  filter(not_inches(height)) %>%
+  .$height
+length(problems)
+
+#10 examples of x'y or x'y" or x'y\"
+pattern = "^\\d\\s*'\\s*\\d{1,2}\\.*\\d*'*\"*$"
+str_subset(problems,pattern) %>% head(n=10) %>%cat
+
+#10 examples of entries in cm rather than inches
+ind <- which(between(suppressWarnings(as.numeric(problems))/2.54, 54, 81) )
+ind <- ind[!is.na(ind)]
+problems[ind] %>% head(n=10) %>% cat
+
+#detect whether a comma is present
+pattern = ","
+str_detect(murders_raw$total,pattern)
+
+#show the subset of strings including "cm"
+str_subset(reported_heights$height, "cm")
+
+#use the "or" symbol inside a regex (|)
+yes = c("180 cm", "70 inches")
+no = c("180","70''")
+s = c(yes,no)
+str_detect(s,"cm") | str_detect(s,"inches")
+str_detect(s,"cm|inches")
+
+#using \\d for digits
+yes = c("5","6","5'10","5 feet", "4'11")
+no = c("",".","Five","six")
+s = c(yes,no)
+pattern = "\\d"
+str_detect(s,pattern)
+
+#highlight occurrence of pattern
+str_view(s,pattern)
+
+#highlight all instances of pattern
+str_view_all(s, pattern)
+
+
+#using \\d for digits
+yes = c("5","6","5'10","5 feet", "4'11")
+no = c("",".","Five","six")
+s = c(yes,no)
+pattern = "\\d"
+
+#[56] means 5 or 6
+str_view(s,"[56]")
+
+#[4-7] means 4, 5, 6, or 7
+yes = as.character(4:7)
+no = as.character(1:3)
+s = c(yes,no)
+str_detect(s,"[4-7]")
+
+#^ means start of a string, $ means end of string
+pattern = "^\\d$"
+yes = c("1","5","9")
+no = c("12","123","1","a4","b")
+s = c(yes,no)
+str_view(s,pattern)
+
+#curly braces define quantifiers: 1 or 2 digits
+pattern = "^\\d{1,2}$"
+yes = c("1","5","9","12")
+no = c("123","a4","b")
+str_view(c(yes,no),pattern)
+
+#combining character class, anchors and quantifier
+pattern = "^[4-5]'\\d{1,2}\"$"
+yes <- c("5'7\"", "6'2\"",  "5'12\"")
+no <- c("6,2\"", "6.2\"","I am 5'11\"", "3'2\"", "64")
+str_detect(yes, pattern)
+str_detect(no, pattern)
